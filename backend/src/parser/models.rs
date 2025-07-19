@@ -2,7 +2,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize,Deserialize,Debug,Default, Clone)]
-pub struct Teacher {
+pub struct Teach {
     pub abbreviation: String,
     pub name : String,
 }
@@ -15,13 +15,13 @@ pub struct Subject {
 }
 
 #[derive(Serialize,Deserialize,Debug,Default,Clone)]
-pub struct TimeTable {
-    pub teachers: Option<Vec<Teacher>>,
+pub struct TimeTableinfo {
+    pub teachers: Option<Vec<Teach>>,
     pub subjects: Option<Vec<Subject>>,
 }
 
-impl TimeTable {
-    pub fn to_json(&self) -> Json<TimeTable> {
+impl TimeTableinfo {
+    pub fn to_json(&self) -> Json<TimeTableinfo> {
         Json(self.clone())
     }
 }

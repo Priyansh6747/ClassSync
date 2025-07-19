@@ -1,4 +1,5 @@
 mod parser;
+mod models;
 
 use axum::{response::Html, routing::{get, post}, Json, Router};
 use tokio;

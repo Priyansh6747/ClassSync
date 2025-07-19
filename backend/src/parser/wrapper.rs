@@ -1,9 +1,9 @@
 use axum::Json;
 use pdf_extract::extract_text_by_pages;
 use crate::parser::ai_parse::ai_parse;
-use crate::parser::models::TimeTable;
+use crate::parser::models::{TimeTableinfo};
 
-pub async fn get_timetable(path:&str) -> Json<TimeTable> {
+pub async fn get_timetable(path:&str) -> Json<TimeTableinfo> {
     let content = get_pdf_text(path);
     let timetable = ai_parse(&content).await;
     timetable.to_json()

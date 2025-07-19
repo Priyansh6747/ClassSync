@@ -1,4 +1,4 @@
-use crate::parser::models::TimeTable;
+use crate::parser::models::{ TimeTableinfo};
 use dotenv::dotenv;
 use gemini_light_rs::Client;
 use serde::de::DeserializeOwned;
@@ -35,14 +35,14 @@ fn get_prompt(content: &str) -> String {
     extended_prompt
 }
 
-pub async fn ai_parse(content: &str) -> TimeTable {
+pub async fn ai_parse(content: &str) -> TimeTableinfo {
     dotenv().ok();
     let api_key = env::var("GEMINI_API_KEY").expect("GEMINI_API_KEY not set");
     let model = env::var("GEMINI_MODEL").expect("GEMINI_MODEL not set");
     let mut client = Client::new(&api_key,&model);
     let prompt = get_prompt(&content);
     let ai_res = client.chat(&*prompt).await.expect("No valid response from AI");
-    let timetable: TimeTable = ai_res_decoder(&ai_res);
+    let timetable: TimeTableinfo = ai_res_decoder(&ai_res);
     timetable
 }
 
