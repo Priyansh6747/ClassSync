@@ -1,4 +1,82 @@
-/backend/target
-/backend/.idea
-/backend/.env
-/backend/.sample
+# ------------------------------
+# Frontend - Expo (App/)
+# ------------------------------
+
+# Dependencies
+App/node_modules/
+
+# Expo
+App/.expo/
+App/.expo-shared/
+App/dist/
+App/web-build/
+
+# Metro cache
+App/.metro-health-check*
+
+# Native (EAS/credentials)
+App/.kotlin/
+App/*.jks
+App/*.p8
+App/*.p12
+App/*.key
+App/*.mobileprovision
+App/*.orig.*
+App/*.pem
+
+# Debug logs
+App/npm-debug.*
+App/yarn-debug.*
+App/yarn-error.*
+App/pnpm-debug.*
+
+# Env files
+App/.env
+App/.env.*
+App/.env*.local
+
+# Misc cache + IDEs
+App/*.pack
+App/*.tmp
+App/*.swp
+App/.watchmanconfig
+App/react-native-debugger.json
+App/packager-info.json
+
+# IDE
+App/.vscode/
+App/.idea/
+App/*.tsbuildinfo
+
+# OS
+App/.DS_Store
+
+# Binaries
+App/*.apk
+App/*.aab
+App/*.ipa
+App/*.keystore
+
+# TypeScript env (optional)
+App/expo-env.d.ts
+
+# ------------------------------
+# Backend (Rust)
+# ------------------------------
+
+Backend/target/
+Backend/.idea/
+Backend/.env
+Backend/.env.*
+Backend/.sample
+
+
+
+# ------------------------------
+# Global ignores
+# ------------------------------
+.env
+.env.*
+*.log
+.DS_Store
+.idea/
