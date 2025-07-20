@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 ///Base Structs
 #[derive(Serialize,Deserialize,Debug,Default, Clone)]
+#[derive(PartialEq)]
 pub struct Teacher {
     pub abbreviation: String,
     pub name : String,

@@ -1,2 +1,3 @@
-mod meta_data;
-mod main_data;
+pub(crate) mod meta_data;
+pub(crate) mod main_data;
+pub(crate) mod wrapper;
