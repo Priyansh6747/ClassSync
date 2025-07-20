@@ -10,7 +10,17 @@ pub struct Teacher {
 
 #[derive(Serialize,Deserialize,Debug,Default, Clone)]
 pub struct Teachers {
-    list: Option<Vec<Teacher>>,
+    pub(crate) list: Option<Vec<Teacher>>,
+}
+
+impl Teachers {
+    // Helper method to find teacher by abbreviation
+    pub fn find_by_abbreviation(&self, abbreviation: &str) -> Option<Teacher> {
+        self.list.as_ref()?
+            .iter()
+            .find(|teacher| teacher.abbreviation == abbreviation)
+            .cloned()
+    }
 }
 
 
@@ -57,14 +67,30 @@ impl Subjects {
 
         out
     }
+    
+    
+
+    // Helper method to find subject by code across all categories
+    pub fn find_by_code(&self, code: &str) -> Option<Subject> {
+        let all_subjects = [&self.cs, &self.ec, &self.hs, &self.ph, &self.ma, &self.oth];
+
+        for subject_list in all_subjects.iter() {
+            if let Some(subjects) = subject_list {
+                if let Some(subject) = subjects.iter().find(|s| s.code == code) {
+                    return Some(subject.clone());
+                }
+            }
+        }
+        None
+    }
 }
 
 #[derive(Serialize,Deserialize,Debug,Default, Clone)]
 pub struct TimeSlot {
-    start:u8,
-    end:u8,
-    duration:u8,
-    relax_period:u8,
+    pub(crate) start:u8,
+    pub(crate) end:u8,
+    pub(crate) duration:u8,
+    pub(crate) relax_period:u8,
 }
 
 /// Actual Structs
@@ -72,9 +98,21 @@ pub struct TimeSlot {
 //To Store and Send
 #[derive(Serialize,Deserialize,Debug,Default, Clone)]
 pub struct TimeTableMetaData {
-    time : TimeSlot,
-    teachers: Teachers,
-    subjects: Subjects
+    pub(crate) time : TimeSlot,
+    pub(crate) teachers: Teachers,
+    pub(crate) subjects: Subjects
+}
+
+impl TimeTableMetaData {
+    //return the teacher whose abbreviation matches
+    pub fn get_teacher(&self, abbreviation: String) -> Option<Teacher> {
+        self.teachers.find_by_abbreviation(&abbreviation)
+    }
+
+    //return the subject whose code matches
+    pub fn get_subject(&self, code: String) -> Option<Subject> {
+        self.subjects.find_by_code(&code)
+    }
 }
 
 
@@ -89,7 +127,7 @@ pub struct TimeTableInfo {
 impl TimeTableInfo {
     pub fn transform(&self) -> TimeTableMetaData {
         let a = self.clone();
-        TimeTableMetaData{ 
+        TimeTableMetaData{
             time :a.time,
             teachers: Teachers{list:Some(a.teachers)},
             subjects: Subjects::new(a.subjects)

@@ -15,13 +15,3 @@ fn get_pdf_text(path: &str) -> String {
     String::from(needed_content)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[tokio::test]
-    async fn test_get_timetable() {
-        let path = "sample/TT.pdf";
-        let tt = get_timetable(path).await;
-        //dbg!(tt);
-    }
-}
