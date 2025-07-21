@@ -1,6 +1,8 @@
+use std::io::ErrorKind;
 use serde::{Deserialize, Serialize};
 use crate::models::main_data::{Slot,SlotRes};
 use crate::models::meta_data::TimeTableMetaData;
+use bcrypt::{hash, verify, DEFAULT_COST,BcryptError};
 
 #[derive(Serialize,Deserialize,Debug,Default, Clone)]
 pub struct TimeStamp{
@@ -60,13 +62,13 @@ impl DayRes{
 
 #[derive(Serialize,Deserialize,Debug,Default, Clone)]
 pub struct TimeTable{
-    id:u8,
+    version:u8,
     days:Vec<Day>,
 }
 
 #[derive(Serialize,Deserialize,Debug,Default, Clone)]
 pub struct TimeTableRes{
-    id:u8,
+    ver:u8,
     days:Vec<DayRes>,
 }
 impl TimeTableRes{
@@ -76,8 +78,58 @@ impl TimeTableRes{
             new_slots.push(i.transform(meta_data));
         }
         TimeTable{
-            id: self.id,
+            version: self.ver,
             days: new_slots,
         }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct MetaData{
+    version:u16,
+    data: TimeTableMetaData
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct Res {
+    pub key: String,
+    pub timetable: Option<TimeTableRes>,
+}
+
+impl Res {
+    pub fn verify(&self, meta_data: &TimeTableMetaData) -> Result<TimeTable, BcryptError> {
+        dotenv::dotenv().ok();
+        let stored_hash = "$2b$12$p6iy1Fciwj.IasMAVBEhOODdgfoQZx3vFsiP2m8Uql.sA9Cc9/e9W";
+
+        if verify(&self.key, &stored_hash)? {
+            if let Some(timetable) = &self.timetable {
+                Ok(timetable.transform(meta_data))
+            } else {
+                Err(BcryptError::Io(std::io::Error::new(ErrorKind::InvalidData,""))) 
+            }
+        } else {
+            Err(BcryptError::Io(std::io::Error::new(ErrorKind::InvalidData,"")))
+        }
+    }
+}
+
+fn gen_hash(password:&str) -> Result<String, BcryptError> {
+    hash(password, DEFAULT_COST)
+}
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+    #[test]
+    fn get_hash() {
+        let a =gen_hash("Pass").unwrap();
+        dbg!(a);
+        assert_eq!(2,2);
+    }
+    #[test]
+    fn test_verify() {
+        let stored_hash = "$2b$12$YtQs1d9.s3GX8KP3GoY13OEOmo.Z2lPl/wn0ZHK4KEUkcs6UD57h2".to_string();
+        let a = verify("Pass",&stored_hash);
+        assert!(a.is_ok() && a.unwrap());
     }
 }

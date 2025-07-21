@@ -15,3 +15,13 @@ fn get_pdf_text(path: &str) -> String {
     String::from(needed_content)
 }
 
+#[tokio::test]
+async fn test_get_timetable() {
+    let a = get_timetable("sample/TT.pdf").await;
+
+    let teachers_len = a.teachers.as_ref().map(|t| t.len()).unwrap_or(0);
+    let subjects_len = a.subjects.as_ref().map(|s| s.len()).unwrap_or(0);
+
+    println!("teachers: {:?} subject {:?}", teachers_len, subjects_len);
+    dbg!(&a);
+}
