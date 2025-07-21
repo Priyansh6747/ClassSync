@@ -1,15 +1,14 @@
 use std::env;
 use mongodb::{
     bson::{doc, Document},
-    options::{ClientOptions, ServerApi, ServerApiVersion},
+    options::{ClientOptions, ServerApi, ServerApiVersion,FindOptions},
     Client, Database, Collection,
 };
 use tokio;
 use dotenv::dotenv;
-use anyhow::{Result, Context};
-
-
-
+use anyhow::{Result, Context, anyhow};
+use crate::models::meta_data::TimeTableMetaData;
+use crate::models::wrapper::{MetaData, Res};
 
 #[derive(Debug)]
 pub struct MongoConnection {
@@ -74,6 +73,41 @@ impl MongoConnection {
     {
         self.database(db_name).collection(collection_name)
     }
+    
+    pub async fn get_metadata(&self, db_name: &str) -> Result<MetaData> {
+        let collection: Collection<MetaData> = self.collection(db_name, "meta_data");
+
+        let count = collection.estimated_document_count().await?;
+        let latest_meta = collection.find_one(doc! { "version": count as i32 }).await?;
+        match latest_meta {
+            Some(meta) => Ok(meta),
+            None => Err(anyhow!("No meta data found")),
+        }
+    }
+
+    pub async fn add_meta_data(&self, db_name: &str, meta_data_res: TimeTableMetaData) -> Result<()> {
+        let collection: Collection<MetaData> = self.collection(db_name, "meta_data");
+
+        let count = collection.estimated_document_count().await?;
+        let latest_meta = collection.find_one(doc! { "version": count as i32 }).await?;
+        let new_meta_data = if let Some(existing_meta) = latest_meta {
+            existing_meta.merge(&meta_data_res)
+        } else {
+            // Create new metadata with version 1
+            MetaData {
+                version: 1,
+                data: meta_data_res,
+            }
+        };
+
+        // Insert the new metadata
+        collection
+            .insert_one(&new_meta_data)
+            .await
+            .context("Failed to insert metadata")?;
+
+        Ok(())
+    }
 }
 
 /// Create a database with initial collections and setup
@@ -123,10 +157,10 @@ async fn test_connect() {
     let mongo = MongoConnection::new().await.unwrap();
 
     // Create the ClassSync database
-    create_database(&mongo.client, "classsync").await.unwrap();
+    create_database(&mongo.client, "class_sync").await.unwrap();
 
     // Example: Insert a test user
-    let users_collection: Collection<Document> = mongo.collection("classsync", "users");
+    let users_collection: Collection<Document> = mongo.collection("class_sync", "users");
 
     let test_user = doc! {
         "name": "John Doe",

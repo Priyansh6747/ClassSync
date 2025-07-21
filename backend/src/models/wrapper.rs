@@ -86,8 +86,16 @@ impl TimeTableRes{
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct MetaData{
-    version:u16,
-    data: TimeTableMetaData
+    pub version:u16,
+    pub data: TimeTableMetaData
+}
+impl MetaData {
+    pub fn merge(&self , new:&TimeTableMetaData) -> MetaData {
+        MetaData{
+            version: self.version + 1,
+            data: self.data.merge(new)
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
