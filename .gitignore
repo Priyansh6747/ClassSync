@@ -80,3 +80,4 @@ Backend/.sample
 *.log
 .DS_Store
 .idea/
+/admin/node_modules/

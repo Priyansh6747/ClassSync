@@ -75,6 +75,7 @@ pub struct Slot {
     pub course: Option<Subject>,
     pub room: Option<String>,
     pub teacher: Option<Vec<Teacher>>,
+    pub duration:i32,
 }
 
 //slot received via json
@@ -88,6 +89,19 @@ pub struct SlotRes {
 }
 
 impl SlotRes {
+    fn get_duration(&self) ->i32 {
+        match &self.slot_purpose {
+            None => {0}
+            Some(purpose) => {
+                match purpose.as_str() {
+                    "L" => 50,
+                    "T" => 50,
+                    "P" => 50 + 60,
+                    _ => 50,
+                }
+            }
+        }
+    }
     pub fn transform(&self, meta_data: &TimeTableMetaData) -> Slot {
         let teachers = if let Some(teacher_names) = &self.teacher {
             let mut teaches: Vec<Teacher> = Vec::new();
@@ -114,6 +128,7 @@ impl SlotRes {
             course: self.course.as_ref().and_then(|code| meta_data.get_subject(code.clone())),
             room: self.room.clone(),
             teacher: teachers,
+            duration: self.get_duration()
         }
     }
 }
