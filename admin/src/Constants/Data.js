@@ -1,7 +1,7 @@
 let a = {
     "key": "h",
     "timetable": {
-        "id": 1,
+        "ver": 1,
         "days": [
             {
                 "day": 0,

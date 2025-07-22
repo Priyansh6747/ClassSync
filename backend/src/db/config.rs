@@ -8,7 +8,7 @@ use tokio;
 use dotenv::dotenv;
 use anyhow::{Result, Context, anyhow};
 use crate::models::meta_data::TimeTableMetaData;
-use crate::models::wrapper::{MetaData, Res};
+use crate::models::wrapper::{MetaData, Res, TimeTable};
 
 #[derive(Debug)]
 pub struct MongoConnection {
@@ -85,6 +85,16 @@ impl MongoConnection {
         }
     }
 
+    pub async fn get_timetable(&self, db_name: &str) -> Result<TimeTable> {
+        let collection: Collection<TimeTable> = self.collection(db_name, "timetables");
+        let count = collection.estimated_document_count().await?;
+        let latest_meta = collection.find_one(doc! { "version": count as i32 }).await?;
+        match latest_meta {
+            Some(meta) => Ok(meta),
+            None => Err(anyhow!("No meta data found")),
+        }
+    }
+
     pub async fn add_meta_data(&self, db_name: &str, meta_data_res: TimeTableMetaData) -> Result<()> {
         let collection: Collection<MetaData> = self.collection(db_name, "meta_data");
 
@@ -106,6 +116,13 @@ impl MongoConnection {
             .await
             .context("Failed to insert metadata")?;
 
+        Ok(())
+    }
+    pub async fn add_time_table(&self, db_name: &str, mut res: TimeTable) -> Result<()> {
+        let collection: Collection<TimeTable> = self.collection(db_name, "timetables");
+        let count = collection.estimated_document_count().await? as u8;
+        res.set_version(count+1);
+        collection.insert_one(&res).await.context("Failed to insert time table")?;
         Ok(())
     }
 }

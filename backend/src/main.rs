@@ -3,14 +3,15 @@ mod models;
 mod test;
 mod db;
 
-use axum::{response::Html, routing::{get, post}, Json, Router};
-use axum::http::StatusCode;
-use tower_http::cors::{CorsLayer, Any};
-use tokio;
-use serde::{Deserialize, Serialize};
 use crate::db::config::MongoConnection;
-use crate::models::meta_data::{TimeTableMetaData, TimeTableInfo};
-use crate::models::wrapper::MetaData;
+use crate::models::meta_data::TimeTableInfo;
+use crate::models::wrapper::{MetaData, Res, TimeTable};
+use axum::http::StatusCode;
+use axum::{routing::{get, post}, Json, Router, extract::State};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use tokio;
+use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Serialize)]
 struct Message {
@@ -22,59 +23,115 @@ struct Input {
     name: String,
 }
 
+// Shared application state
+#[derive(Clone)]
+struct AppState {
+    db_name: String,
+}
+
+// Helper function for consistent error handling
+fn mongo_error_response(e: impl std::fmt::Display) -> (StatusCode, Json<Message>) {
+    (StatusCode::INTERNAL_SERVER_ERROR, Json(Message {
+        msg: format!("Database error: {}", e)
+    }))
+}
+
+fn success_response(msg: &str) -> Json<Message> {
+    Json(Message { msg: msg.to_string() })
+}
+
 #[tokio::main]
 async fn main() {
+    // Shared state
+    let state = AppState {
+        db_name: "class_sync".to_string(),
+    };
+
     // Create CORS layer
     let cors = CorsLayer::new()
-        .allow_origin(Any) 
-        .allow_methods(Any) 
-        .allow_headers(Any); 
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
 
-   
     let app = Router::new()
-        .route("/new", get(try_json))
+        .route("/new", get(health_check))
         .route("/metadata", post(set_metadata))
         .route("/metadata", get(get_metadata))
-        .layer(cors); 
+        .route("/timetable", post(set_time_table))
+        .route("/timetable", get(get_time_table))
+        .with_state(state)
+        .layer(cors);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+        .await
+        .expect("Failed to bind to address");
+
     println!("Server running on http://localhost:3000");
 
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .await
+        .expect("Server failed to start");
 }
 
-async fn try_json() -> Json<Message> {
-    let response = Message {
-        msg: "Hello, JSON World!".to_string(),
-    };
-    Json(response)
+async fn health_check() -> Json<Message> {
+    success_response("Hello, JSON World!")
 }
 
-async fn set_metadata(Json(payload): Json<TimeTableInfo>) -> Json<Message> {
-    println!("Got metadata: ");
+async fn set_metadata(
+    State(state): State<AppState>,
+    Json(payload): Json<TimeTableInfo>
+) -> Result<Json<Message>, (StatusCode, Json<Message>)> {
     let res = payload.transform();
-    let mongo = MongoConnection::new().await;
-    match mongo {
-        Ok(connection) => {
-            let _= connection.add_meta_data("class_sync", res).await;
-            Json(Message{msg: "Success".to_string()})
-        }
-        Err(e) => { return Json(Message { msg: format!("Mongo error: {}", e) }) }
-    }
+    let mongo = MongoConnection::new().await
+        .map_err(mongo_error_response)?;
+
+    mongo.add_meta_data(&state.db_name, res).await
+        .map_err(mongo_error_response)?;
+
+    Ok(success_response("Success"))
 }
 
-async fn get_metadata() -> Result<Json<MetaData>, (StatusCode, Json<Message>)> {
-    let mongo = MongoConnection::new().await;
-    match mongo {
-        Ok(connection) => {
-            match connection.get_metadata("class_sync").await {
-                Ok(meta_data) => {Ok(Json(meta_data))}
-                Err(e) => {Err((StatusCode::NOT_FOUND, Json(Message{msg: format!("Mongo error: {}", e)})))}
-            }
-            
-        }
-        Err(e) => {
-            Err((StatusCode::INTERNAL_SERVER_ERROR, Json(Message{msg: format!("Mongo error: {}", e)})))
-        }
-    }
+async fn get_metadata(
+    State(state): State<AppState>
+) -> Result<Json<MetaData>, (StatusCode, Json<Message>)> {
+    let mongo = MongoConnection::new().await
+        .map_err(mongo_error_response)?;
+
+    let meta_data = mongo.get_metadata(&state.db_name).await
+        .map_err(|e| (StatusCode::NOT_FOUND, Json(Message {
+            msg: format!("Metadata not found: {}", e)
+        })))?;
+
+    Ok(Json(meta_data))
+}
+
+async fn set_time_table(
+    State(state): State<AppState>,
+    Json(payload): Json<Res>
+) -> Result<Json<Message>, (StatusCode, Json<Message>)> {
+    let mongo = MongoConnection::new().await
+        .map_err(mongo_error_response)?;
+
+    let meta_data = mongo.get_metadata(&state.db_name).await
+        .map_err(|_| (StatusCode::BAD_REQUEST, success_response("Error getting metadata")))?;
+
+    let time_table = payload.transform(&meta_data.data)
+        .map_err(|_| (StatusCode::BAD_REQUEST, success_response("Unable to verify key")))?;
+
+    let _ =mongo.add_time_table(&state.db_name, time_table).await;
+    Ok(success_response("Success"))
+}
+
+async fn get_time_table(
+    State(state): State<AppState>
+) -> Result<Json<TimeTable>, (StatusCode, Json<Message>)> {
+    let mongo = MongoConnection::new().await
+        .map_err(mongo_error_response)?;
+
+    let timetable = mongo.get_timetable(&state.db_name).await
+        .map_err(|e| (StatusCode::NOT_FOUND, Json(Message {
+            msg: format!("Timetable not found: {}", e)
+        })))?;
+
+    Ok(Json(timetable))
 }

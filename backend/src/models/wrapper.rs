@@ -65,6 +65,11 @@ pub struct TimeTable{
     version:u8,
     days:Vec<Day>,
 }
+impl TimeTable{
+    pub fn set_version(&mut self, version:u8){
+        self.version = version;
+    }
+}
 
 #[derive(Serialize,Deserialize,Debug,Default, Clone)]
 pub struct TimeTableRes{
@@ -105,18 +110,17 @@ pub struct Res {
 }
 
 impl Res {
-    pub fn verify(&self, meta_data: &TimeTableMetaData) -> Result<TimeTable, BcryptError> {
-        dotenv::dotenv().ok();
+    pub fn transform(&self, meta_data: &TimeTableMetaData) -> Result<TimeTable, BcryptError> {
         let stored_hash = "$2b$12$p6iy1Fciwj.IasMAVBEhOODdgfoQZx3vFsiP2m8Uql.sA9Cc9/e9W";
 
         if verify(&self.key, &stored_hash)? {
             if let Some(timetable) = &self.timetable {
                 Ok(timetable.transform(meta_data))
             } else {
-                Err(BcryptError::Io(std::io::Error::new(ErrorKind::InvalidData,""))) 
+                Err(BcryptError::Io(std::io::Error::new(ErrorKind::InvalidData,"Bad Data"))) 
             }
         } else {
-            Err(BcryptError::Io(std::io::Error::new(ErrorKind::InvalidData,"")))
+            Err(BcryptError::Io(std::io::Error::new(ErrorKind::InvalidData,"Bad Auth")))
         }
     }
 }
