@@ -7,6 +7,7 @@ import Button from "../Components/Button";
 import CC from "../Components/CourseContainer";
 import User from "../Components/UserInfo";
 import {getUser, storeUser} from "../Helper/storage";
+import {router} from "expo-router";
 
 const { height, width } = Dimensions.get('window');
 
@@ -27,33 +28,30 @@ const app = ()=>{
     }
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchInitialData = async () => {
             try {
-                const querySnapshot = await getDocs(collection(db, "MetaData"));
+                const [querySnapshot, user,] = await Promise.all([
+                    getDocs(collection(db, "MetaData")),
+                    getUser()
+                ]);
+
                 querySnapshot.forEach((doc) => {
                     setMetadata(doc.data());
                 });
+
+                if (user) {
+                    setUser(user);
+                }
             } catch (err) {
                 alert(err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchData();
+
+        fetchInitialData();
     }, []);
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                let user = await getUser();
-                if (user) {
-                    setUser(user);
-                }
-            }catch(err){
-                alert(err);
-            }
-        };
-        fetchUser();
-    }, []);
+
 
     if (loading)
         return (
@@ -74,7 +72,11 @@ const app = ()=>{
                 <CC setUser={setUser} dep="oth" courses={metadata.data.subjects.oth}/>
                 <View style={styles.button}>
                     <Button height={height * 0.07} width={width*0.5} text="Apply"
-                            onPress={saveUser}
+                            onPress={()=>{
+                                saveUser().then(r =>
+                                router.navigate('./timetable')
+                                )
+                            }}
                     />
                 </View>
             </ScrollView>

@@ -1,13 +1,29 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Dimensions, Image, StyleSheet, Text, View} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Button from "../Components/Button"
 import AText from "../Components/AnmatedText"
 import {router} from "expo-router";
+import {getUser} from "../Helper/storage";
 
 const { height, width } = Dimensions.get('window');
 
 const App = () => {
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const user = await getUser();
+                if (user) {
+                    router.navigate('./timetable');
+                }
+            } catch (err) {
+                alert(err);
+            }
+        };
+        fetchUser();
+    }, []);
+
     return (
         <View style={styles.container}>
             <LinearGradient
