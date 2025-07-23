@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import { View, Text, Animated, StyleSheet, Dimensions, Platform } from 'react-native';
-
+import {db} from "../firebaseConfig";
 const { width, height } = Dimensions.get('window');
 
 const TechLoadingScreen = () => {
@@ -15,6 +15,8 @@ const TechLoadingScreen = () => {
     const floatAnim3 = useRef(new Animated.Value(0)).current;
     const floatAnim4 = useRef(new Animated.Value(0)).current;
     const toastAnim = useRef(new Animated.Value(0)).current;
+
+
 
     // Tech-themed rotating subtexts
     const subtexts = [
