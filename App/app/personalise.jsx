@@ -1,16 +1,37 @@
-import {Text, View, StyleSheet} from "react-native";
+import {Text, View, StyleSheet, Dimensions, ScrollView} from "react-native";
 import Loading from "../Components/Loading";
-import {useLayoutEffect, useState} from "react";
+import React, {useEffect, useLayoutEffect, useState} from "react";
 import { collection, getDocs } from "firebase/firestore";
 import {db} from "../firebaseConfig";
+import Button from "../Components/Button";
+import CC from "../Components/CourseContainer";
+import User from "../Components/UserInfo";
+import {getUser, storeUser} from "../Helper/storage";
+
+const { height, width } = Dimensions.get('window');
+
 const app = ()=>{
     const [loading, setLoading] = useState(true);
-    useLayoutEffect(() => {
+    const [metadata, setMetadata] = useState(null);
+    const [user, setUser] = useState({
+        batch: "F1",
+        subjects:[]
+    });
+
+    const saveUser = async ()=>{
+        try {
+            await storeUser(user)
+        }catch(err){
+            alert(err)
+        }
+    }
+
+    useEffect(() => {
         const fetchData = async () => {
             try {
                 const querySnapshot = await getDocs(collection(db, "MetaData"));
                 querySnapshot.forEach((doc) => {
-                    console.log(`${doc.id} => ${JSON.stringify(doc.data())}`);
+                    setMetadata(doc.data());
                 });
             } catch (err) {
                 alert(err);
@@ -20,27 +41,62 @@ const app = ()=>{
         };
         fetchData();
     }, []);
-
-
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                let user = await getUser();
+                if (user) {
+                    setUser(user);
+                }
+            }catch(err){
+                alert(err);
+            }
+        };
+        fetchUser();
+    }, []);
 
     if (loading)
         return (
-            <View style={styles.loadcontainer}>
+            <View style={styles.loadContainer}>
                 <Loading/>
             </View>
         )
 
     return (
-        <View>
-            <Text>Hello</Text>
+        <View style={styles.container}>
+            <ScrollView style={{flex:1}}>
+                <User user={user} setUser={setUser} />
+                <CC setUser={setUser} dep="cs" courses={metadata.data.subjects.cs} user={user} />
+                <CC setUser={setUser} dep="ec" courses={metadata.data.subjects.ec} user={user}/>
+                <CC setUser={setUser} dep="hs" courses={metadata.data.subjects.hs} user={user}/>
+                <CC setUser={setUser} dep="ph" courses={metadata.data.subjects.ph} user={user}/>
+                <CC setUser={setUser} dep="ma" courses={metadata.data.subjects.ma} user={user}/>
+                <CC setUser={setUser} dep="oth" courses={metadata.data.subjects.oth}/>
+                <View style={styles.button}>
+                    <Button height={height * 0.07} width={width*0.5} text="Apply"
+                            onPress={saveUser}
+                    />
+                </View>
+            </ScrollView>
+
         </View>
     )
 }
 export default app;
 
 const styles = StyleSheet.create({
-    loadcontainer: {
+    loadContainer: {
         flex: 1,
         justifyContent: "center",
-    }
+    },
+    container: {
+        flex: 1,
+        justifyContent: "flex-end",
+    },
+    button: {
+        marginVertical: '5%',
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex:9,
+    },
 })

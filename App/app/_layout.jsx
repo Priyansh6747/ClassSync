@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import {StatusBar, StyleSheet, Text} from "react-native";
+import {StatusBar} from "react-native";
 import BackgroundWrapper from "../Components/BackgroundWrapper";
 
 export default function Layout() {
