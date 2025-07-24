@@ -6,6 +6,7 @@ import {collection, getDocs} from "firebase/firestore";
 import {db} from "../firebaseConfig";
 import Loading from "../Components/Loading";
 import Bar from "../Components/TopBar";
+import {getDayContent} from "../Helper/Data";
 
 const App = ()=>{
     const [user, setUser] = React.useState(null);
@@ -20,7 +21,7 @@ const App = ()=>{
                 const [querySnapshotMetaData, user,querySnapshotTimeTable] = await Promise.all([
                     getDocs(collection(db, "MetaData")),
                     getUser(),
-                    getDocs(collection(db, "Timetable")),
+                    getDocs(collection(db, "TimeTable")),
                 ]);
 
                 querySnapshotMetaData.forEach((doc) => {
@@ -33,7 +34,8 @@ const App = ()=>{
 
                 if (user) {
                     setUser(user);
-                }
+                }else
+                    router.navigate('./index')
             } catch (err) {
                 alert(err);
             } finally {
@@ -44,6 +46,13 @@ const App = ()=>{
         fetchInitialData();
     }, []);
 
+    useEffect(() => {
+        if (timetable) {
+            let data = getDayContent(day,timetable);
+            console.log(data);
+        }
+    },[timetable,day]);
+
     if (loading)
         return (
             <View style={{flex: 1, justifyContent: "center",}}>
@@ -52,7 +61,7 @@ const App = ()=>{
         )
     return (
         <View>
-            <Bar setDay={setDay}/>
+            <Bar Day={day} setDay={setDay}/>
         </View>
     )
 }

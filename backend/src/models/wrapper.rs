@@ -62,12 +62,17 @@ impl DayRes{
 
 #[derive(Serialize,Deserialize,Debug,Default, Clone)]
 pub struct TimeTable{
-    version:u8,
+    year:u8,
     days:Vec<Day>,
 }
-impl TimeTable{
-    pub fn set_version(&mut self, version:u8){
-        self.version = version;
+
+#[derive(Serialize,Deserialize,Debug,Default, Clone)]
+pub struct Collection{
+    timetables:Vec<TimeTable>,
+}
+impl Collection{
+    pub fn get_timetables(&self) -> Vec<TimeTable>{
+        self.timetables.clone()
     }
 }
 
@@ -83,7 +88,7 @@ impl TimeTableRes{
             new_slots.push(i.transform(meta_data));
         }
         TimeTable{
-            version: self.ver,
+            year: self.ver,
             days: new_slots,
         }
     }

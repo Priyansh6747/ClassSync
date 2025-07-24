@@ -120,8 +120,6 @@ impl MongoConnection {
     }
     pub async fn add_time_table(&self, db_name: &str, mut res: TimeTable) -> Result<()> {
         let collection: Collection<TimeTable> = self.collection(db_name, "timetables");
-        let count = collection.estimated_document_count().await? as u8;
-        res.set_version(count+1);
         collection.insert_one(&res).await.context("Failed to insert time table")?;
         Ok(())
     }
