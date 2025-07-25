@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde::__private::de::IdentifierDeserializer;
 use crate::models::meta_data::{Subject, Teacher, TimeTableMetaData};
 
 ///Base structs for actual timetable
@@ -131,5 +132,40 @@ impl SlotRes {
             duration: self.get_duration()
         }
     }
+    
+    fn batch_extractor(input: &str) ->Vec<String> {
+        let start_bracket = input.find('(');
+        let batch_str = match  start_bracket {
+            None => {
+                "F1".to_string()
+            }
+            Some(n) => {
+                input.chars().skip(1).take(n-1).collect()
+            }
+        };
+        batch_str.split(|c| c=='E' || c=='F' ).map(|x| x.to_string()).collect()
+    }
+    fn get_purpose(input: &str) -> String {
+        input
+            .trim()
+            .chars()
+            .next()
+            .map(|c| c.to_ascii_uppercase().to_string())
+            .unwrap_or_default()
+    }
+    fn get_course(input: &str) -> String {
+        let open_bracket = input.find('(');
+        if open_bracket.is_none() {
+            return  "15B11PH111".to_string();
+        }
+        input.chars().skip(open_bracket.unwrap()+1).take(10).collect::<String>()
+    }
+}
+
+#[test]
+fn test_main() {
+    let a = SlotRes::get_course("LE3E4(15B11PH111) -123 /SHALU");
+    dbg!(&a);
+    assert_eq!(a,"15B11PH111");
 }
 

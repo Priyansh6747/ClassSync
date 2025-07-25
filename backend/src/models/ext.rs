@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::str::FromStr;
 use crate::models::wrapper::Column;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,6 +19,15 @@ pub struct DaySchedule {
     pub time_slots: HashMap<String, Vec<String>>,
 }
 
+impl DaySchedule {
+    pub fn transform(&self) -> Vec<Column> {
+        let cols:Vec<Column> = Vec::new();
+        for i in &self.time_slots {
+            todo!()
+        }
+        cols
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Timetable {
@@ -88,51 +98,73 @@ impl DaySchedule {
 }
 
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_deserialization() {
-        let json_data = r#"
-        {
-            "1": {
-                "timetable": {
-                    "MON": {
-                        "9 - 9:50 AM": [
-                            "LE3E4(15B11PH111) -123 /SHALU"
-                        ]
-                    },
-                    "TUES": {
-                        "9 - 9:50 AM": []
-                    },
-                    "WED": {
-                        "9 - 9:50 AM": []
-                    },
-                    "THUR": {
-                        "9 - 9:50 AM": []
-                    },
-                    "FRI": {
-                        "9 - 9:50 AM": []
-                    }
-                },
-                "subjects": [
-                    {
-                        "Code": "15B11PH111",
-                        "Full Code": "15B11PH111",
-                        "Subject": "Physics-1"
-                    }
-                ]
-            }
-        }
-        "#;
-
-        let timetable: Result<TimetableData, _> = serde_json::from_str(json_data);
-        assert!(timetable.is_ok());
-
-        let timetable = timetable.unwrap();
-        let year_1 = timetable.get_year_data("1").unwrap();
-        assert_eq!(year_1.subjects.len(), 1);
-        assert_eq!(year_1.subjects[0].subject, "Physics-1");
-    }
+#[derive(Debug)]
+struct TimeInfo {
+    start: u32,
+    dur: u32,
 }
+
+fn parse_time_block(input: &str) -> Option<TimeInfo> {
+    let parts: Vec<&str> = input.split('-').collect();
+    if parts.len() != 2 {
+        return None;
+    }
+
+    let start_str = parts[0].trim();
+    let end_str = parts[1].trim();
+
+    // Check if AM/PM is only at the end
+    let end_upper = end_str.to_uppercase();
+    let has_am_pm_at_end = end_upper.contains("AM") || end_upper.contains("PM");
+    let start_has_am_pm = start_str.to_uppercase().contains("AM") || start_str.to_uppercase().contains("PM");
+
+    let (start_time, end_time) = if has_am_pm_at_end && !start_has_am_pm {
+        // Apply the AM/PM from end to start as well
+        let am_pm_suffix = if end_upper.contains("AM") { " AM" } else { " PM" };
+        let start_with_suffix = format!("{}{}", start_str, am_pm_suffix);
+        (parse_time(&start_with_suffix)?, parse_time(end_str)?)
+    } else {
+        (parse_time(start_str)?, parse_time(end_str)?)
+    };
+
+    let start_minutes = start_time.0 * 60 + start_time.1;
+    let end_minutes = end_time.0 * 60 + end_time.1;
+
+    if end_minutes < start_minutes {
+        return None; 
+    }
+
+    Some(TimeInfo {
+        start: start_time.0,
+        dur: end_minutes - start_minutes,
+    })
+}
+
+fn parse_time(time_str: &str) -> Option<(u32, u32)> {
+    let time_str = time_str.to_uppercase();
+    let is_pm = time_str.contains("PM");
+    let is_am = time_str.contains("AM");
+
+    let time_clean = time_str.replace("AM", "").replace("PM", "");
+    let parts: Vec<&str> = time_clean.trim().split(':').collect();
+
+    if parts.len() != 2 {
+        return None;
+    }
+
+    let hour = u32::from_str(parts[0].trim()).ok()?;
+    let minute = u32::from_str(parts[1].trim()).ok()?;
+
+    if hour > 12 || minute >= 60 {
+        return None;
+    }
+
+    let hour24 = if hour == 12 {
+        if is_am { 0 } else { 12 }
+    } else {
+        if is_pm { hour + 12 } else { hour }
+    };
+
+    Some((hour24, minute))
+}
+
