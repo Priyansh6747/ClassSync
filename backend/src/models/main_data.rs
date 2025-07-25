@@ -132,18 +132,54 @@ impl SlotRes {
             duration: self.get_duration()
         }
     }
-    
-    fn batch_extractor(input: &str) ->Vec<String> {
+
+
+    fn batch_extractor(input: &str) -> Vec<String> {
         let start_bracket = input.find('(');
-        let batch_str = match  start_bracket {
-            None => {
-                "F1".to_string()
-            }
+        let batch_str = match start_bracket {
+            None => "F1".to_string(),
             Some(n) => {
-                input.chars().skip(1).take(n-1).collect()
+                input.chars().skip(1).take(n - 1).collect()
             }
         };
-        batch_str.split(|c| c=='E' || c=='F' ).map(|x| x.to_string()).collect()
+        if batch_str.to_ascii_uppercase() == "ALL" {
+            return vec!["ALL".to_string()];
+        }
+
+        let mut result = Vec::new();
+        let mut chars = batch_str.chars().peekable();
+
+        while let Some(ch) = chars.next() {
+            if ch.is_alphabetic() {
+                let mut batch = String::new();
+                batch.push(ch);
+
+                if ch == 'A' && chars.peek() == Some(&'L') {
+                    chars.next(); 
+                    if chars.peek() == Some(&'l') {
+                        chars.next(); 
+                        result.push("All".to_string());
+                        continue;
+                    } else {
+                        batch.push('l');
+                    }
+                }
+
+                while let Some(&digit) = chars.peek() {
+                    if digit.is_ascii_digit() {
+                        batch.push(chars.next().unwrap());
+                    } else {
+                        break;
+                    }
+                }
+
+                if batch.len() > 1 && batch != "Al" {
+                    result.push(batch);
+                }
+            }
+        }
+
+        result
     }
     fn get_purpose(input: &str) -> String {
         input
@@ -160,12 +196,83 @@ impl SlotRes {
         }
         input.chars().skip(open_bracket.unwrap()+1).take(10).collect::<String>()
     }
+    fn get_room(input: &str) -> String {
+        let parts: Vec<&str> = input.split('-').collect();
+
+        let location_part = if parts.len() < 2 {
+            if let Some(paren_pos) = input.rfind(')') {
+                &input[paren_pos + 1..]
+            } else {
+                return input.to_string();
+            }
+        } else {
+            parts.last().unwrap()
+        };
+
+        let slash_parts: Vec<&str> = location_part.split('/').collect();
+
+        let location = if slash_parts.len() >= 3 {
+            slash_parts[1]
+        } else if slash_parts.len() >= 1 {
+            slash_parts[0]
+        } else {
+            location_part
+        };
+
+        location.trim().to_string()
+    }
+    fn get_teacher(input: &str) -> Vec<String> {
+        let room = SlotRes::get_room(input);
+
+        if room.is_empty() {
+            if let Some(slash_pos) = input.find('/') {
+                let teachers_part = input[slash_pos + 1..].trim();
+                return teachers_part.split('/').map(|s| s.trim().to_string()).collect();
+            }
+            return vec![input.to_string()];
+        }
+
+        if let Some(room_pos) = input.find(&room) {
+            let after_room = &input[room_pos + room.len()..];
+
+            if let Some(slash_pos) = after_room.find('/') {
+                let teachers_part = &after_room[slash_pos + 1..];
+                return teachers_part
+                    .split('/')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+            }
+        }
+
+        if let Some(slash_pos) = input.find('/') {
+            let teachers_part = input[slash_pos + 1..].trim();
+            return teachers_part.split('/').map(|s| s.trim().to_string()).collect();
+        }
+
+        vec![input.to_string()]
+    }
+    
+    pub fn frm_str(input: &str) -> Self {
+        let slot_purpose = Some(Self::get_purpose(input));
+        let batch = Some(Self::batch_extractor(input));
+        let course = Some(Self::get_course(input));
+        let room = Some(Self::get_room(input));
+        let teacher = Some(Self::get_teacher(input));
+        Self {
+            slot_purpose,
+            batch,
+            course,
+            room,
+            teacher
+        }
+    }
+
 }
 
 #[test]
 fn test_main() {
-    let a = SlotRes::get_course("LE3E4(15B11PH111) -123 /SHALU");
-    dbg!(&a);
-    assert_eq!(a,"15B11PH111");
+    let a = SlotRes::frm_str("PF7F8F9(15B17CI373)/CL3/PAM/PRM/MIT");
+    dbg!(a);
 }
 
