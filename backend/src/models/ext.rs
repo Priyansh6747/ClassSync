@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
-use crate::models::wrapper::Column;
+use crate::models::wrapper::{Column, ColumnRes};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Subject {
@@ -19,15 +19,7 @@ pub struct DaySchedule {
     pub time_slots: HashMap<String, Vec<String>>,
 }
 
-impl DaySchedule {
-    pub fn transform(&self) -> Vec<Column> {
-        let cols:Vec<Column> = Vec::new();
-        for i in &self.time_slots {
-            todo!()
-        }
-        cols
-    }
-}
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Timetable {

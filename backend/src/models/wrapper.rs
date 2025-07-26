@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::io::ErrorKind;
 use serde::{Deserialize, Serialize};
 use crate::models::main_data::{Slot,SlotRes};
@@ -34,6 +35,46 @@ impl ColumnRes{
             duration: self.duration,
             schedules: new_slots,
         }
+    }
+
+    fn get_start_time(time: &str) -> u16 {
+        let start_part = time.trim().split(" - ").next().unwrap_or("");
+        let full_time = time.trim();
+        let am_pm = if full_time.ends_with("AM") {
+            "AM"
+        } else if full_time.ends_with("PM") {
+            "PM"
+        } else {
+            ""
+        };
+        let hour_str = start_part.split(':').next()
+            .or_else(|| start_part.split('-').next())
+            .unwrap_or("0")
+            .trim();
+
+        let hour = hour_str.parse::<u16>().unwrap_or(0);
+
+        match am_pm {
+            "PM" => {
+                if hour == 12 {
+                    12
+                } else {
+                    hour + 12
+                }
+            },
+            "AM" => {
+                if hour == 12 {
+                    0
+                } else {
+                    hour
+                }
+            },
+            _ => hour
+        }
+    }
+    
+    fn frm_json(time : &str , slots: &Vec<String>) ->Self {
+        todo!()
     }
 }
 
