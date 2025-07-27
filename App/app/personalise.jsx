@@ -76,10 +76,7 @@ const app = () => {
     useEffect(() => {
         fetchSubjects()
 
-    }, [url, user.year]);
-    useEffect(() => {
-        console.log("metadata " + JSON.stringify(metadata));
-    },[metadata])
+    }, [url, user?.year]);
 
     if (loading) {
         return (
