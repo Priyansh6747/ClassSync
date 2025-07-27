@@ -72,11 +72,66 @@ impl ColumnRes{
             _ => hour
         }
     }
-    
-    fn frm_json(time : &str , slots: &Vec<String>) ->Self {
-        todo!()
+
+    fn get_duration(time: &str) -> u16 {
+        let parts: Vec<&str> = time.split(" - ").collect();
+        let start_time = parts[0].trim();
+        let end_time = parts[1].trim();
+
+        fn parse_time(time_str: &str) -> u16 {
+            let (time_part, period) = if time_str.contains(" ") {
+                let parts: Vec<&str> = time_str.split_whitespace().collect();
+                (parts[0], parts[1])
+            } else {
+                if time_str.ends_with("AM") {
+                    (&time_str[..time_str.len()-2], "AM")
+                } else {
+                    (&time_str[..time_str.len()-2], "PM")
+                }
+            };
+
+            let time_components: Vec<&str> = time_part.split(':').collect();
+            let hours: u16 = time_components[0].parse().unwrap();
+            let minutes: u16 = time_components[1].parse().unwrap();
+
+            let total_minutes = match period {
+                "AM" => if hours == 12 { minutes } else { hours * 60 + minutes },
+                "PM" => if hours == 12 { 12 * 60 + minutes } else { (hours + 12) * 60 + minutes },
+                _ => hours * 60 + minutes,
+            };
+
+            total_minutes
+        }
+
+        let start_minutes = parse_time(start_time);
+        let end_minutes = parse_time(end_time);
+
+        if end_minutes >= start_minutes {
+            end_minutes - start_minutes
+        } else {
+            (24 * 60) - start_minutes + end_minutes
+        }
+    }
+
+    pub fn frm_json(time : &str , slots: &Vec<String>) ->Self {
+        let start_time = TimeStamp{
+            hr : ColumnRes::get_start_time(time) as u8,
+            min: 0
+        };
+        let duration = ColumnRes::get_duration(time);
+        let mut schedules:Vec<SlotRes> = vec![];
+        for s in slots {
+            let res = SlotRes::frm_str(s);
+            schedules.push(res);
+        }
+        Self{
+            start_time,
+            duration,
+            schedules
+        }
     }
 }
+
 
 #[derive(Serialize,Deserialize,Debug,Default, Clone)]
 pub struct Day {

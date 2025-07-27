@@ -159,6 +159,7 @@ dependencies = [
  "gemini_light_rs",
  "mongodb",
  "pdf-extract",
+ "reqwest",
  "serde",
  "serde_json",
  "tokio",

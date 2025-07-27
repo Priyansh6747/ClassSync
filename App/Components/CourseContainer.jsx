@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import Card from './CourseCard';
 
-const App = ({ dep, courses,user, setUser }) => {
+const CourseContainer = ({ title, courses, user, setUser }) => {
     const handleAdd = (isChecked, courseCode) => {
         setUser(prevUser => {
             if (isChecked) {
@@ -16,7 +16,7 @@ const App = ({ dep, courses,user, setUser }) => {
                 // Remove course from subjects
                 return {
                     ...prevUser,
-                    subjects: prevUser.subjects.filter(code => code !== courseCode)
+                    subjects: prevUser.subjects ? prevUser.subjects.filter(code => code !== courseCode) : []
                 };
             }
             return prevUser;
@@ -24,19 +24,23 @@ const App = ({ dep, courses,user, setUser }) => {
     };
 
     if (!courses || courses.length === 0) {
-        return null
+        return (
+            <View style={styles.container}>
+                <Text style={styles.noCoursesText}>No courses available</Text>
+            </View>
+        );
     }
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.departmentTitle}>{dep.toUpperCase()} Courses</Text>
+                <Text style={styles.departmentTitle}>{title ? title.toUpperCase() : 'COURSES'}</Text>
             </View>
             {courses.map((course, index) => (
                 <Card
-                    key={index}
-                    name={course.name}
-                    code={course.code}
+                    key={`${course.Code}-${index}`} // Better key using course code
+                    name={course.Subject}
+                    code={course.Code}
                     handleAdd={handleAdd}
                     user={user}
                 />
@@ -63,6 +67,12 @@ const styles = StyleSheet.create({
         color: 'white',
         textAlign: 'center',
     },
+    noCoursesText: {
+        fontSize: 16,
+        color: 'white',
+        textAlign: 'center',
+        marginTop: 50,
+    },
 });
 
-export default App;
+export default CourseContainer;

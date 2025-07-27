@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
-use crate::models::wrapper::{Column, ColumnRes};
+use crate::models::wrapper::{Column, ColumnRes, DayRes, TimeTable};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Subject {
@@ -18,11 +18,22 @@ pub struct DaySchedule {
     #[serde(flatten)]
     pub time_slots: HashMap<String, Vec<String>>,
 }
+impl DaySchedule {
+    pub fn transform(&self) ->Vec<ColumnRes> {
+        let mut cols: Vec<ColumnRes> = vec![];
+        for i in &self.time_slots {
+            let (date,slots) = i;
+            let col = ColumnRes::frm_json(date,slots);
+            cols.push(col);
+        }
+        cols
+    }
+}
 
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Timetable {
+pub struct ExtTimetable {
     #[serde(rename = "MON")]
     pub monday: DaySchedule,
     #[serde(rename = "TUES")]
@@ -33,13 +44,56 @@ pub struct Timetable {
     pub thursday: DaySchedule,
     #[serde(rename = "FRI")]
     pub friday: DaySchedule,
-    #[serde(rename = "SAT", skip_serializing_if = "Option::is_none")]
-    pub saturday: Option<DaySchedule>,
+    #[serde(rename = "SAT")]
+    pub saturday:DaySchedule,
+}
+
+impl ExtTimetable {
+    pub fn transform(&self) ->TimeTable {
+        let mut days: Vec<DayRes> = vec![];
+
+        let mon = DayRes {
+            day: 0,
+            cols: self.monday.transform(),
+        };
+        days.push(mon);
+
+        let tues = DayRes {
+            day: 1,
+            cols: self.tuesday.transform(),
+        };
+        days.push(tues);
+
+        let wed = DayRes {
+            day: 2,
+            cols: self.wednesday.transform(),
+        };
+        days.push(wed);
+
+        let thurs = DayRes {
+            day: 3,
+            cols: self.thursday.transform(),
+        };
+        days.push(thurs);
+
+        let fri = DayRes {
+            day: 4,
+            cols: self.friday.transform(),
+        };
+        days.push(fri);
+
+        let sat = DayRes {
+            day: 5,
+            cols: self.saturday.transform(),
+        };
+        days.push(sat);
+        todo!()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct YearData {
-    pub timetable: Timetable,
+    pub timetable: ExtTimetable,
     pub subjects: Vec<Subject>,
 }
 
@@ -73,7 +127,7 @@ impl YearData {
             "WED" | "WEDNESDAY" => Some(&self.timetable.wednesday),
             "THUR" | "THURSDAY" => Some(&self.timetable.thursday),
             "FRI" | "FRIDAY" => Some(&self.timetable.friday),
-            "SAT" | "SATURDAY" => self.timetable.saturday.as_ref(),
+            "SAT" | "SATURDAY" => Some(&self.timetable.saturday),
             _ => None,
         }
     }
@@ -159,4 +213,5 @@ fn parse_time(time_str: &str) -> Option<(u32, u32)> {
 
     Some((hour24, minute))
 }
+
 

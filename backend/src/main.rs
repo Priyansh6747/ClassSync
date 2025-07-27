@@ -10,8 +10,11 @@ use axum::http::StatusCode;
 use axum::{routing::{get, post}, Json, Router, extract::State};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use axum::response::IntoResponse;
 use tokio;
 use tower_http::cors::{Any, CorsLayer};
+use reqwest::{Client, Error, Response};
+use crate::models::ext::TimetableData;
 
 #[derive(Serialize)]
 struct Message {
@@ -59,6 +62,7 @@ async fn main() {
         .route("/metadata", get(get_metadata))
         .route("/timetable", post(set_time_table))
         .route("/timetable", get(get_time_table))
+        .route("/ext/timetable", get(fetch_and_process))
         .with_state(state)
         .layer(cors);
 
@@ -134,4 +138,26 @@ async fn get_time_table(
         })))?;
 
     Ok(Json(timetable))
+}
+
+async fn fetch_and_process() -> Json<Message> {
+    let client = Client::new();
+
+    let url = "https://simple-timetable.tashif.codes/data/time-table/ODD25/128.json";
+    let res = client.get(url).send().await;
+    match res {
+        Ok(t) => {
+            let data = t.json::<TimetableData>().await;
+            if let Ok(data) = data {
+                dbg!(data);
+                return Json(Message{msg: "Timetable process successfully".to_string()})
+            }
+            Json(Message{msg: "Unable to parse".to_string()})
+        }
+        Err(_) => {
+            Json(Message{msg: "Error".to_string()})
+        }
+    }
+
+    
 }
