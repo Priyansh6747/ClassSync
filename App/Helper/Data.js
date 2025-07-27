@@ -5,8 +5,6 @@ async function getSubjects(url, year) {
             throw new Error(`HTTP error! status: ${res.status}`);
         }
         let data = await res.json();
-        console.log('Fetched data:', data);
-        console.log('Year:', year);
 
         let sub = [];
         switch (year) {

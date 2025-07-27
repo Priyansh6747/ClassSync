@@ -12,7 +12,7 @@ import {
 
 const { width, height } = Dimensions.get('window');
 
-const UserProfileSetup = ({user, setUser, setMode}) => {
+const UserProfileSetup = ({user, setUser, setMode, fetchSubjects}) => {
     const [name, setName] = useState(user?.name || "");
     const [year, setYear] = useState(user?.year || "1st");
     const [batch, setBatch] = useState(user?.batch || "");
@@ -195,6 +195,7 @@ const UserProfileSetup = ({user, setUser, setMode}) => {
                                 saveUser().then(r =>
                                     setMode(false)
                                 )
+                                fetchSubjects();
                             }
                         }}
                         disabled={!isFormValid}

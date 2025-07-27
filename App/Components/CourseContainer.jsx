@@ -38,7 +38,7 @@ const CourseContainer = ({ title, courses, user, setUser }) => {
             </View>
             {courses.map((course, index) => (
                 <Card
-                    key={`${course.Code}-${index}`} // Better key using course code
+                    key={`${course.Code}-${index}`}
                     name={course.Subject}
                     code={course.Code}
                     handleAdd={handleAdd}

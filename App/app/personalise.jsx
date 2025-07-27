@@ -31,6 +31,19 @@ const app = () => {
             alert(err);
         }
     };
+    const fetchSubjects = async () => {
+        if (!url || !user.year) {
+            return;
+        }
+
+        try {
+            const subjects = await getSubjects(url, user.year);
+            setMetadata(subjects);
+        } catch (err) {
+            alert('Failed to fetch subjects: ' + err.message);
+        }
+    };
+
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -61,31 +74,12 @@ const app = () => {
     }, []);
 
     useEffect(() => {
-        const fetchSubjects = async () => {
-            if (!url || !user.year) {
-                console.log('URL or user year not available yet');
-                return;
-            }
+        fetchSubjects()
 
-            try {
-                console.log('Fetching subjects with URL:', url, 'and year:', user.year);
-                const subjects = await getSubjects(url, user.year);
-                console.log('Fetched subjects:', subjects);
-
-                setMetadata(subjects);
-
-                setUser(prevUser => ({
-                    ...prevUser,
-                    subjects: subjects
-                }));
-            } catch (err) {
-                console.error('Error fetching subjects:', err);
-                alert('Failed to fetch subjects: ' + err.message);
-            }
-        };
-
-        fetchSubjects();
     }, [url, user.year]);
+    useEffect(() => {
+        console.log("metadata " + JSON.stringify(metadata));
+    },[metadata])
 
     if (loading) {
         return (
@@ -98,7 +92,7 @@ const app = () => {
     if (mode) {
         return (
             <View style={styles.loadContainer}>
-                <User user={user} setUser={setUser} setMode={setMode} />
+                <User user={user} setUser={setUser} setMode={setMode} fetchSubjects={fetchSubjects} />
             </View>
         );
     }
@@ -106,27 +100,16 @@ const app = () => {
     return (
         <View style={styles.container}>
             <ScrollView style={{ flex: 1 }}>
-                {/* Display subjects if available */}
-                {metadata && metadata.length > 0 && (
-                    <View style={styles.subjectsContainer}>
-                        <Text style={styles.subjectsTitle}>Available Subjects:</Text>
-                        {metadata.map((subject, index) => (
-                            <Text key={index} style={styles.subjectItem}>
-                                {subject}
-                            </Text>
-                        ))}
-                    </View>
-                )}
-
+                <CC courses={metadata} setUser={setUser} user={user} title="Courses" />
                 <View style={styles.button}>
                     <Button
                         height={height * 0.07}
                         width={width * 0.5}
                         text="Apply"
                         onPress={() => {
-                            saveUser().then(() =>
-                                router.navigate('./timetable')
-                            );
+                            saveUser().then(() => {
+                                router.navigate('./timetable');
+                            });
                         }}
                     />
                 </View>
