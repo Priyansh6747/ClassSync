@@ -142,7 +142,7 @@ function getSubjectName(code, subjectsList) {
     return subject ? subject["Subject"] : null;
 }
 function shouldUserAttend(slotString, user) {
-    const batchIncluded = slotString.includes(user.batch) || slotString.includes("ALL");
+    const batchIncluded = slotString.split('(')[0].includes(user.batch) || slotString.includes("ALL");
     const subjectIncluded = user.subjects.some(subject =>
         slotString.includes(subject)
     );

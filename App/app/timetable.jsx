@@ -1,9 +1,14 @@
 import {Text, View} from "react-native";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {formatTimetable, get_timetable} from "../Helper/Data";
 import {collection, getDocs} from "firebase/firestore";
 import {db} from "../firebaseConfig";
 import {getUser} from "../Helper/storage";
+import InfoBar from "../Components/InfoBar";
+import Loading from "../Components/Loading";
+import DaySelector from "../Components/DaySelector";
+import Slot from "../Components/Slot";
+import Schedule from "../Components/Schedule";
 
 
 const App = ()=> {
@@ -11,19 +16,9 @@ const App = ()=> {
     const [user, setUser] = useState(null);
     const [timetable, setTimetable] = useState(null);
     const [url, setUrl] = useState("");
+    const [day, setDay] = useState(0);
 
-    const fetchData = async () => {
-        try {
-            let data = await get_timetable(url,user.year);
-            setTimetable(data);
-
-        }catch(error){
-            alert( "Error " + error)
-        }finally {
-            setLoading(false);
-        }
-    }
-
+    const dayOptions = ["MON","TUES","WED","THUR","FRI","SAT"];
 
     useEffect(() => {
         const initialfetch = async () => {
@@ -41,6 +36,9 @@ const App = ()=> {
 
                 if (userData) {
                     setUser(userData);
+                }
+                if (user && url) {
+                    await formatTimetable(url,user).then(timetable => setTimetable(timetable));
                 }
             } catch (err) {
                 console.error('Error fetching initial data:', err);
@@ -69,9 +67,21 @@ const App = ()=> {
         console.log(JSON.stringify(timetable));
         console.log(JSON.stringify(user));
     }, [timetable]);
+
+
+    if (loading || !timetable) {
+        return (
+            <View style={{flex: 1,justifyContent: "center"}}>
+                <Loading />
+            </View>
+        );
+    }
+
     return (
         <View>
-            <Text>Hello</Text>
+            <InfoBar batch={user?.batch} year={user?.year} name={user?.name} />
+            <DaySelector dayIdx = {day} setDayIdx = {setDay} />
+            <Schedule timetable={timetable[dayOptions[day]]} />
         </View>
     )
 }
