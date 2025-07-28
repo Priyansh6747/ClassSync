@@ -1,6 +1,12 @@
-import { Text, View, StyleSheet } from 'react-native'
+import { Text, View, StyleSheet, TouchableOpacity } from 'react-native'
+import Ionicons from '@expo/vector-icons/Ionicons';
+import {router} from "expo-router";
 
 const App = ({ name, batch, year }) => {
+    const handleSettingsPress = () => {
+        router.navigate('./personalise')
+    };
+
     return (
         <View style={styles.container}>
             <View style={styles.topBar}>
@@ -17,6 +23,13 @@ const App = ({ name, batch, year }) => {
                         <Text style={styles.yearText}>{year} year</Text>
                     </View>
                 </View>
+                <TouchableOpacity style={styles.settingsButton} onPress={handleSettingsPress}>
+                    <View style={styles.settingsIcon}>
+                        <Text style={styles.settingsIconText}>
+                            <Ionicons name="settings-outline" size={24} color="white" />
+                        </Text>
+                    </View>
+                </TouchableOpacity>
             </View>
             <View style={styles.gradientOverlay} />
         </View>
@@ -56,6 +69,7 @@ const styles = StyleSheet.create({
     rightSection: {
         alignItems: 'flex-end',
         justifyContent: 'center',
+        marginRight: 12,
     },
     nameText: {
         color: '#FFFFFF',
@@ -95,6 +109,26 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         letterSpacing: 0.3,
         textTransform: 'uppercase',
+    },
+    settingsButton: {
+        position: 'absolute',
+        top: 10,
+        right: 15,
+        zIndex: 10,
+    },
+    settingsIcon: {
+        width: 40,
+        height: 40,
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.25)',
+    },
+    settingsIconText: {
+        fontSize: 20,
+        color: '#FFFFFF',
     },
 });
 

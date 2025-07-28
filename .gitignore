@@ -81,4 +81,3 @@ Backend/.sample
 .DS_Store
 .idea/
 /admin/node_modules/
-/App/firebaseConfig.js

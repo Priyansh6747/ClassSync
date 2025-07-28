@@ -19,7 +19,9 @@ export default function Layout() {
                     headerBackTitleVisible: false,
                     headerTransparent: true,
                 }}
-            />
+            >
+                <Stack.Screen name="timetable" options={{ headerShown: false }} />
+            </Stack>
         </BackgroundWrapper>
     );
 }
