@@ -87,13 +87,6 @@ The mobile app features:
   <p><em>Timetable View - Interactive schedule display</em></p>
 </div>
 
-### Background Design
-
-<div align="center">
-  <img src="App/assets/imgs/bg.png" alt="Background Design" width="400" />
-  <p><em>Beautiful Gradient Background Design</em></p>
-</div>
-
 ## 🖥️ Admin Dashboard Features
 
 <div align="center">
