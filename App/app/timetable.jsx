@@ -16,7 +16,7 @@ const App = ()=> {
     const [user, setUser] = useState(null);
     const [timetable, setTimetable] = useState(null);
     const [url, setUrl] = useState("");
-    const [day, setDay] = useState(0);
+    const [day, setDay] = useState(new Date().getDay());
 
     const dayOptions = ["MON","TUES","WED","THUR","FRI","SAT"];
 

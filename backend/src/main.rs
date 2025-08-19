@@ -15,6 +15,7 @@ use tokio;
 use tower_http::cors::{Any, CorsLayer};
 use reqwest::{Client, Error, Response};
 use crate::models::ext::TimetableData;
+use std::fs;
 
 #[derive(Serialize)]
 struct Message {
@@ -63,6 +64,7 @@ async fn main() {
         .route("/timetable", post(set_time_table))
         .route("/timetable", get(get_time_table))
         .route("/ext/timetable", get(fetch_and_process))
+        .route("/data", get(get_data_json))  
         .with_state(state)
         .layer(cors);
 
@@ -158,6 +160,30 @@ async fn fetch_and_process() -> Json<Message> {
             Json(Message{msg: "Error".to_string()})
         }
     }
+}
 
-    
+
+async fn get_data_json() -> impl IntoResponse {
+    let file_path = "data.json";
+
+    match fs::read_to_string(file_path) {
+        Ok(content) => {
+            // Parse to ensure it's valid JSON
+            match serde_json::from_str::<serde_json::Value>(&content) {
+                Ok(json_value) => {
+                    (StatusCode::OK, Json(json_value))
+                }
+                Err(_) => {
+                    (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({
+                        "error": "Invalid JSON format in data.json"
+                    })))
+                }
+            }
+        }
+        Err(_) => {
+            (StatusCode::NOT_FOUND, Json(serde_json::json!({
+                "error": "data.json file not found"
+            })))
+        }
+    }
 }
