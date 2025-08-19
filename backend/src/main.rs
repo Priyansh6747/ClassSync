@@ -16,6 +16,7 @@ use tower_http::cors::{Any, CorsLayer};
 use reqwest::{Client, Error, Response};
 use crate::models::ext::TimetableData;
 use std::fs;
+use axum::routing::head;
 
 #[derive(Serialize)]
 struct Message {
@@ -58,7 +59,7 @@ async fn main() {
         .allow_headers(Any);
 
     let app = Router::new()
-        .route("/new", get(health_check))
+        .route("/new", head(health_check))
         .route("/metadata", post(set_metadata))
         .route("/metadata", get(get_metadata))
         .route("/timetable", post(set_time_table))
